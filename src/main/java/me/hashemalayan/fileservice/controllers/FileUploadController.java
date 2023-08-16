@@ -4,7 +4,10 @@ import io.minio.*;
 import io.minio.errors.*;
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
+import me.hashemalayan.fileservice.domain.FileBlob;
+import me.hashemalayan.fileservice.repositories.FileBlobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class FileUploadController {
 
     private MinioClient minioClient;
+    private FileBlobRepository fileBlobRepository;
 
     @Autowired
     public FileUploadController(MinioClient minioClient) {
@@ -39,11 +43,17 @@ public class FileUploadController {
             XmlParserException,
             InternalException {
 
-        String bucketName = "pics";
+        var mimeType = file.getContentType();
+
+        if (mimeType == null || !mimeType.equals("video/mp4")) {
+            return new ResponseEntity<>("Unsupported file type", HttpStatus.BAD_REQUEST);
+        }
+
+        String bucketName = "vids";
         String originalFilename = file.getOriginalFilename();
 
 
-        String objectName = UUID.randomUUID().toString() + "-" + originalFilename;
+        String objectName = UUID.randomUUID() + "-" + originalFilename;
 
 
         var found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
@@ -73,6 +83,12 @@ public class FileUploadController {
                         .build()
         );
 
-        return ResponseEntity.ok(url);
+        return ResponseEntity.ok(
+                fileBlobRepository.save(
+                        FileBlob.builder()
+                                .url(url)
+                                .build()
+                )
+        );
     }
 }
