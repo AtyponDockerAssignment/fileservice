@@ -3,6 +3,7 @@ package me.hashemalayan.fileservice.controllers;
 import io.minio.*;
 import io.minio.errors.*;
 import io.minio.http.Method;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import me.hashemalayan.fileservice.domain.FileBlob;
 import me.hashemalayan.fileservice.repositories.FileBlobRepository;
@@ -20,16 +21,11 @@ import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/v1/")
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class FileUploadController {
 
     private MinioClient minioClient;
     private FileBlobRepository fileBlobRepository;
-
-    @Autowired
-    public FileUploadController(MinioClient minioClient) {
-        this.minioClient = minioClient;
-    }
 
     @GetMapping("/upload")
     ResponseEntity<?> upload(@RequestParam("file") MultipartFile file) throws
