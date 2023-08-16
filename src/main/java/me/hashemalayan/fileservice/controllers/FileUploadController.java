@@ -4,10 +4,6 @@ import io.minio.*;
 import io.minio.errors.*;
 import io.minio.http.Method;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import me.hashemalayan.fileservice.domain.FileBlob;
-import me.hashemalayan.fileservice.repositories.FileBlobRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 public class FileUploadController {
 
     private MinioClient minioClient;
-    private FileBlobRepository fileBlobRepository;
 
-    @GetMapping("/upload")
+
+    @PostMapping("/upload")
     ResponseEntity<?> upload(@RequestParam("file") MultipartFile file) throws
             ServerException,
             InsufficientDataException,
@@ -45,14 +41,14 @@ public class FileUploadController {
             return new ResponseEntity<>("Unsupported file type", HttpStatus.BAD_REQUEST);
         }
 
-        String bucketName = "vids";
-        String originalFilename = file.getOriginalFilename();
-
-
-        String objectName = UUID.randomUUID() + "-" + originalFilename;
-
-
-        var found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+        final var bucketName = "videos";
+        final var originalFilename = file.getOriginalFilename();
+        final var objectName = UUID.randomUUID() + "-" + originalFilename;
+        final var found = minioClient.bucketExists(
+                BucketExistsArgs.builder()
+                        .bucket(bucketName)
+                        .build()
+        );
 
         if (!found) {
             minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
@@ -79,12 +75,6 @@ public class FileUploadController {
                         .build()
         );
 
-        return ResponseEntity.ok(
-                fileBlobRepository.save(
-                        FileBlob.builder()
-                                .url(url)
-                                .build()
-                )
-        );
+        return ResponseEntity.ok(url);
     }
 }
